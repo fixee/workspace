@@ -4,6 +4,7 @@
 #include<string.h>
 
 #include "thpool/tasklist.h"
+#include "thpool/threadpool.h"
 
 using namespace std;
 
@@ -12,70 +13,29 @@ void hello(void)
     cout << "hello:" << pthread_self() <<endl;
 }
 
-void *consumer( void *data )
+void hello1( int a )
 {
-    tasklist *t = (tasklist *)data;
-    ITask *task;
-
-    while( 1 )
-    {
-        t->wait();
-
-        task = t->get_task();
-
-        if( NULL != task )
-        {
-            task->do_task();
-
-            delete task;
-            task = NULL;
-        }
-        
-        sleep(1);
-    }
+	cout << "hello" << a << endl;
 }
 
-void *producer( void *data )
+int main( int argc, char **argv )
 {
-    tasklist *t = (tasklist *)data;
+	threadpool *pool = new threadpool;
+	pool->init(10, 20, 2 );
+
     ITask *task = NULL;
     int i = 0; 
 
-    while( i < 4096 )
+    while( i < 100 )
     {
-        if( task == NULL )
-            task = make_task( hello );
-
-        if( t->put_task(task) == 0 )
+        if( pool->put_task( hello1, i ) == 0 )
         {
             task = NULL;
             i++;
         }
 
-        sleep(1);
-    }
-}
-
-int main( int argc, char **argv )
-{
-    pthread_t pid1;
-    pthread_t pid[10];
-
-
-    tasklist t;
-    t.init(10,1);
-
-    pthread_create( &pid1, NULL, producer, &t );
-
-    for( int i = 0; i < 10; i++ )
-    {
-        pthread_create( &pid[i], NULL, consumer, &t );
+		sleep(1);
     }
 
-    pthread_join( pid1, NULL );
-    for( int i = 0; i < 10; i++ )
-    {
-        pthread_join( pid[i], NULL );
-    }
-
+	sleep(1);
 }

@@ -21,9 +21,10 @@ void tasklist::post( bool b_all )
     pthread_mutex_unlock( &mutex );
 }
 
-tasklist::tasklist():head(0),tail(0),c_need_lock(false),p_need_lock(false)
+tasklist::tasklist():head(NULL),tail(NULL),c_need_lock(false),p_need_lock(false)
 {
-    memset( job_list,0,sizeof(ITask *)*job_list_length);
+	tail = new tasknode;
+	head = tail;
 }
 
 tasklist::~tasklist()
@@ -53,12 +54,16 @@ void tasklist::init( size_t c_cnt, size_t p_cnt )
 ITask *tasklist::get_task()
 {
     ITask *t = NULL;
+	tasknode *node;
     if( c_need_lock )
         pthread_mutex_lock( &c_lock );
 
     if( tail != head )
     {
-        t = job_list[(head++)%job_list_length];
+        t = head->task;
+		node = head;
+		head = head->next;
+		delete node;
     }
 
     if( c_need_lock )
@@ -69,20 +74,17 @@ ITask *tasklist::get_task()
 
 int tasklist::put_task( ITask *t )
 {
-    int result = -1;
     if( p_need_lock )
         pthread_mutex_lock( &p_lock );
 
-    if( tail - head < job_list_length )
-    {
-        job_list[(tail++)%job_list_length] = t;
-        result = 0;
-
-        post();
-    }
+	tasknode *node = new tasknode;
+	tail->task = t;
+	tail->next = node;
+	tail = node;
+    post();
 
     if( p_need_lock )
         pthread_mutex_unlock( &p_lock );
 
-    return result;
+    return 0;
 }

@@ -1,17 +1,16 @@
 
 
 CC=g++
-CFLAG=-g -lcurl -I./include
+CFLAG=-g -lpthread
 
-TARGET=pick_svr
-SUBDIR=./monitor ./httpclient1 ./jsoncpp ./Tools . 
-OBJDIR=./obj
+TARGET=exe
+SUBDIR=./thpool .
 
 SRC=$(foreach DIR, $(SUBDIR), $(wildcard ${DIR}/*.cpp ))
 OBJ=$(patsubst %.cpp, %.o, $(SRC))
 
 BIN_TARGET: $(OBJ)
-	$(CC) $(CFLAG) $(OBJ) -o $(TARGET)
+	$(CC) $(OBJ) -o $(TARGET) $(CFLAG)
 
 $(OBJ): %.o:%.cpp
 	$(CC) $(CFLAG) -c $^ -o $@
@@ -20,4 +19,5 @@ $(OBJ): %.o:%.cpp
 clean:
 	@for DIR in $(SUBDIR); do	\
 		rm -rf  $$DIR/*.o; 		\
-	done
+	done;
+	@rm -rf $(TARGET)
